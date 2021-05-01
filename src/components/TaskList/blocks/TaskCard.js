@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Col, Form, Row } from "react-bootstrap";
+import { Badge, Card, Col, Form, Row } from "react-bootstrap";
 
 function TaskCard({ cardInfo, isChecked, callback, show=true }) {
   let { id, title, parentId, status } = cardInfo
@@ -9,11 +9,12 @@ function TaskCard({ cardInfo, isChecked, callback, show=true }) {
       <Card className="mb-2 task-card">
         <Card.Body>
           <Row>
-            <Col xs="1">#{id}</Col>
+            <Col xs="2" lg="1">#{id}</Col>
             <Col>
               <div className="font-weight-bold mb-1">{title}</div>
-              {parentId && <small>Parent id: {parentId}</small>}
+              {parentId && <Badge variant="warning">Parent id: {parentId}</Badge>}
             </Col>
+            
             <Col xs="auto">
               <Form.Check
                 type="checkbox"
@@ -24,7 +25,8 @@ function TaskCard({ cardInfo, isChecked, callback, show=true }) {
             </Col>
           </Row>
         </Card.Body>
-        <Card.Footer className="py-0">
+
+        <Card.Footer className="py-1">
           <div>Status: {status}</div>
         </Card.Footer>
       </Card>

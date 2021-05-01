@@ -1,4 +1,4 @@
-import { Button, Col, Container, Navbar, Row } from 'react-bootstrap';
+import { Container, Navbar } from 'react-bootstrap';
 import TaskList from './components/TaskList';
 
 function App() {
@@ -6,19 +6,11 @@ function App() {
     <div className="App">
       <Container>
         <Navbar bg="light" className="mb-4">
-          <Row className="flex-fill">
-            <Col >
-              <Navbar.Brand>Task Management System</Navbar.Brand>
-            </Col>
-
-            <Col xs="auto">
-              <Button>+ Create</Button>
-            </Col>
-          </Row>
+          <Navbar.Brand>Task Management System</Navbar.Brand>
         </Navbar>
 
         <div>
-          <TaskList />
+          <TaskList className="shadow-sm" />
         </div>
       </Container>
     </div>
