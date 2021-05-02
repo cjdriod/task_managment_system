@@ -10,7 +10,7 @@ function App() {
         </Navbar>
 
         <div>
-          <TaskList className="shadow-sm" />
+          <TaskList />
         </div>
       </Container>
     </div>

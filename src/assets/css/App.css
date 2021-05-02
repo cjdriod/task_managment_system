@@ -4,6 +4,14 @@
   cursor: pointer;
 }
 
+.task-card.touch-shadow:hover {
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+
 .card-group-outline {
   border-style: dashed;
+}
+
+.text-line-through {
+  text-decoration: line-through;
 }
