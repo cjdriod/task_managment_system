@@ -2,9 +2,49 @@ import React from "react";
 import { TASK_STATUS } from '../../../constant/const'
 import { Badge, Button, Card, Col, Form, Row } from "react-bootstrap";
 
-function TaskCard({ cardInfo, isChecked, callback, openEditModal }) {
+function DepandancySummary({ nodeInfo }) {
+  return (
+    <div className="text-right">
+      <u>Total</u>
+
+      <table>
+        <tbody>
+          <tr>
+            <td>Dependencies:</td>
+            <td className="pl-2">{nodeInfo.total}</td>
+          </tr>
+
+          <tr>
+            <td>Done:</td>
+            <td className="pl-2">{nodeInfo.done}</td>
+          </tr>
+
+          <tr>
+            <td>Complete:</td>
+            <td className="pl-2">{nodeInfo.complete}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function TaskCard({ cardInfo, isChecked, callback, openEditModal, childrenInfoGetter }) {
   let { id, title, parentId, status, children } = cardInfo
   let isSubTask = children.length === 0
+  let childInfo = {}
+
+  if (!isSubTask) {
+    let tempData = childrenInfoGetter(cardInfo).slice(1) //Exclude self
+
+    childInfo = tempData.reduce(((acc, cur) => {
+      return {
+        total: acc.total += 1,
+        done: acc.done += cur.status === TASK_STATUS.done,
+        complete: acc.complete += cur.status === TASK_STATUS.complete
+      }
+    }), { total: 0, done: 0, complete: 0 })
+  }
 
   return (
     <Card className="mb-2 task-card touch-shadow" bg={isSubTask ? 'reset' : 'light'}>
@@ -19,14 +59,15 @@ function TaskCard({ cardInfo, isChecked, callback, openEditModal }) {
           </Col>
 
           <Col xs="auto">
-            {isSubTask &&
-              <Form.Check
+            {isSubTask
+              ? <Form.Check
                 id={'checkbox ' + id}
                 type="checkbox"
                 checked={isChecked}
                 className="custom-checkbox"
                 onChange={evt => { callback(cardInfo, evt.currentTarget.checked) }}
               />
+              : <DepandancySummary nodeInfo={childInfo} />
             }
           </Col>
         </Row>
@@ -34,7 +75,7 @@ function TaskCard({ cardInfo, isChecked, callback, openEditModal }) {
 
       <Card.Footer className="py-1">
         <div className="d-flex justify-content-between">
-          <div>Status: {status}</div>
+          <div>Status: <i>{status}</i></div>
           <div>
             <Button variant="link" className="p-0" onClick={openEditModal}>Edit</Button>
           </div>

@@ -17,7 +17,7 @@ function FilterOptions() {
   ))
 }
 
-function TaskListChildComponent({ taskList, callback, openEditModal }) {
+function TaskListChildComponent({ taskList, callback, openEditModal, childrenInfoGetter }) {
   if (taskList.length > 0) {
     return taskList.map(task => (
       <Media key={task.id} className={[{ 'border-light rounded card-group-outline mb-2 border-right-0': task.children.length > 0 }, 'ml-5']}>
@@ -25,11 +25,12 @@ function TaskListChildComponent({ taskList, callback, openEditModal }) {
           <TaskCard
             cardInfo={task}
             callback={callback}
-            openEditModal={() => openEditModal({ isOpen: true, taskDetails: task })}
+            childrenInfoGetter={childrenInfoGetter}
             isChecked={task.status !== TASK_STATUS.inProgrss}
+            openEditModal={() => openEditModal({ isOpen: true, taskDetails: task })}
           />
 
-          <TaskListChildComponent taskList={task.children} callback={callback} openEditModal={openEditModal} />
+          <TaskListChildComponent taskList={task.children} callback={callback} openEditModal={openEditModal} childrenInfoGetter={childrenInfoGetter} />
         </Media.Body>
       </Media>
     ))
@@ -63,7 +64,7 @@ class TaskList extends React.Component {
 
   async handleChildNodeDetach(currentNode) {
     let taskList = [...this.state.taskList]
-    let parentNodeIndex = taskList.findIndex(task => task.id === currentNode.parentId) 
+    let parentNodeIndex = taskList.findIndex(task => task.id === currentNode.parentId)
     let currentNodeIndex = taskList[parentNodeIndex].children.findIndex(task => task.id === currentNode.id)
 
     taskList[parentNodeIndex].children.splice(currentNodeIndex, 1) // Detach child linking with parent
@@ -132,7 +133,7 @@ class TaskList extends React.Component {
     }
   }
 
-  parentTaskReferencingValidator(parentId, currentNode={}) {
+  parentTaskReferencingValidator(parentId, currentNode = {}) {
     if (parentId === 0) {
       return true
     }
@@ -193,6 +194,7 @@ class TaskList extends React.Component {
                     <TaskCard
                       cardInfo={task}
                       callback={this.handleTaskStatusChange}
+                      childrenInfoGetter={this.nodeDescendants}
                       isChecked={task.status !== TASK_STATUS.inProgrss}
                       show={!this.state.currentFilter || this.state.currentFilter === task.status}
                       openEditModal={() => this.setState({ modalMeta: { isOpen: true, taskDetails: task } })}
@@ -201,7 +203,9 @@ class TaskList extends React.Component {
                     <TaskListChildComponent
                       taskList={task.children}
                       callback={this.handleTaskStatusChange}
-                      openEditModal={modalMeta => this.setState({ modalMeta })} />
+                      childrenInfoGetter={this.nodeDescendants}
+                      openEditModal={modalMeta => this.setState({ modalMeta })}
+                    />
                   </Media.Body>
                 </Media>
               )
