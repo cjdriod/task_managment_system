@@ -11,7 +11,7 @@ function TaskAmendmentModal({show, closeModal, callback, parentIdValidation}) {
   function setField(field, value) {
     setFormData({
       ...formData,
-      [field]: value,
+      [field]: value.trim(),
     })
 
     if (formError[field]) {
@@ -24,13 +24,13 @@ function TaskAmendmentModal({show, closeModal, callback, parentIdValidation}) {
 
   function handleSubmit() {
     let errorBag = {}
+    let {title, parentId} = formData
 
-    if (!formData.title) {
+    if (title === undefined || !title) {
       errorBag['title'] = 'Task title is required'
     }
-
-    if (formData.parentId) {
-      let validParentIdAttach = parentIdValidation(formData.parentId)
+    if (!(parentId === undefined || parentId === '')) {
+      let validParentIdAttach = parentIdValidation(Number(parentId))
 
       if (!validParentIdAttach) {
         errorBag['parentId'] = 'Invalid parent ID'
@@ -40,7 +40,7 @@ function TaskAmendmentModal({show, closeModal, callback, parentIdValidation}) {
     setFormError(errorBag)
 
     if (Object.keys(errorBag).length === 0) {
-      callback(formData)
+      callback({title, parentId: Number(parentId) || null })
       resetModal()
     }
   }
@@ -77,7 +77,7 @@ function TaskAmendmentModal({show, closeModal, callback, parentIdValidation}) {
               <span>Parent ID</span>
             </Col>
             <Col>
-              <Form.Control isInvalid={Boolean(formError.parentId)} onChange={evt => setField('parentId', +(evt.target.value))} />
+              <Form.Control isInvalid={Boolean(formError.parentId)} onChange={evt => setField('parentId', evt.target.value)} />
               <Form.Control.Feedback type="Invalid" className="text-danger">{formError.parentId}</Form.Control.Feedback>
             </Col>
           </Row>

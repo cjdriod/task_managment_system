@@ -3,3 +3,7 @@
   height: 1.2em;
   cursor: pointer;
 }
+
+.card-group-outline {
+  border-style: dashed;
+}
