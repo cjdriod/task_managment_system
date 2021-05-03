@@ -15,3 +15,8 @@
 .text-line-through {
   text-decoration: line-through;
 }
+
+.top-right-hand {
+  display: inline-block;
+  transform: rotate(45deg);
+}

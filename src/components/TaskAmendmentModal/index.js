@@ -51,10 +51,15 @@ class TaskAmendmentModal extends React.Component {
     this.setState({ formError })
 
     if (Object.keys(formError).length === 0) {
-      if (this.isUpdate && this.props.taskDetails.parentId !== (Number(parentId) || null)) {
+      if (
+        this.isUpdate &&
+        this.props.taskDetails.parentId !== (Number(parentId) || null) &&
+        this.props.taskDetails.parentId !== null
+      ) {
+        // Only remove node if the current node is not a root node(parentId = null)
         await this.props.detechNodeAction(this.props.taskDetails) // Remove parent linkage
       }
-      
+
       this.props.callback({ ...this.state.formData, title, parentId: Number(parentId) || null })
       this.resetModal()
     }
@@ -67,7 +72,7 @@ class TaskAmendmentModal extends React.Component {
 
   render() {
     let mode = this.isUpdate ? 'Update' : 'Create'
-    
+
     return (
       // Disable animation to avoid findDOMNode issue in bootstrap
       <Modal show onHide={this.resetModal} centered animation={false}>

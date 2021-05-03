@@ -1,9 +1,10 @@
 import React from 'react'
 import TaskCard from './blocks/TaskCard'
 import { TASK_STATUS } from '../../constant/const'
-import { Button, Col, Form, Row, Media } from 'react-bootstrap'
-import TaskAmendmentModal from '../TaskAmendmentModal'
 import * as L from '../../constant/localStorageKeys'
+import TaskAmendmentModal from '../TaskAmendmentModal'
+import { Button, Col, Form, Row, Media } from 'react-bootstrap'
+import TaskListEmptyStateCard from './blocks/TaskListEmptyStateCard'
 
 function FilterOptions() {
   let options = [{ key: 'all', label: 'All', value: '' }]
@@ -17,7 +18,7 @@ function FilterOptions() {
   ))
 }
 
-function TaskListChildComponent({ taskList, callback, openEditModal, childrenInfoGetter }) {
+function TaskListChildComponent({ taskList, callback, openEditModal, childrenInfoGetter, removeTaskAction }) {
   if (taskList.length > 0) {
     return taskList.map(task => (
       <Media key={task.id} className={[{ 'border-light rounded card-group-outline mb-2 border-right-0': task.children.length > 0 }, 'ml-5']}>
@@ -25,12 +26,19 @@ function TaskListChildComponent({ taskList, callback, openEditModal, childrenInf
           <TaskCard
             cardInfo={task}
             callback={callback}
+            removeTaskAction={removeTaskAction}
             childrenInfoGetter={childrenInfoGetter}
             isChecked={task.status !== TASK_STATUS.inProgrss}
             openEditModal={() => openEditModal({ isOpen: true, taskDetails: task })}
           />
 
-          <TaskListChildComponent taskList={task.children} callback={callback} openEditModal={openEditModal} childrenInfoGetter={childrenInfoGetter} />
+          <TaskListChildComponent
+            callback={callback}
+            taskList={task.children}
+            openEditModal={openEditModal}
+            removeTaskAction={removeTaskAction}
+            childrenInfoGetter={childrenInfoGetter}
+          />
         </Media.Body>
       </Media>
     ))
@@ -56,20 +64,36 @@ class TaskList extends React.Component {
     this.parentTaskReferencingValidator = this.parentTaskReferencingValidator.bind(this)
     this.updateParentNode = this.updateParentNode.bind(this)
     this.nodeDescendants = this.nodeDescendants.bind(this)
+    this.setTaskListAction = this.setTaskListAction.bind(this)
   }
 
   handleFilterChange(evt) {
     this.setState({ currentFilter: evt.target.value })
   }
 
-  async handleChildNodeDetach(currentNode) {
+  async setTaskListAction(taskList) {
+    await this.setState({ taskList })
+    localStorage.setItem(L.TASK_LIST, JSON.stringify(taskList))
+  }
+
+  async handleChildNodeDetach(currentNode, removeNode = false) {
     let taskList = [...this.state.taskList]
     let parentNodeIndex = taskList.findIndex(task => task.id === currentNode.parentId)
-    let currentNodeIndex = taskList[parentNodeIndex].children.findIndex(task => task.id === currentNode.id)
 
-    taskList[parentNodeIndex].children.splice(currentNodeIndex, 1) // Detach child linking with parent
-    await this.setState({ taskList })
-    this.updateParentNode(taskList[parentNodeIndex])
+    if (parentNodeIndex !== -1) {
+      let currentNodeIndex = taskList[parentNodeIndex].children.findIndex(task => task.id === currentNode.id)
+
+      taskList[parentNodeIndex].children.splice(currentNodeIndex, 1) // Detach child linking with parent
+      await this.setTaskListAction(taskList)
+      this.updateParentNode(taskList[parentNodeIndex])
+    }
+
+    if (removeNode) {
+      // Hard remove all the affect node records from the list
+      let awaitingRemoveNode = this.nodeDescendants(currentNode).map(node => node.id)
+      // We must read the latest state here again to avoid inacurate value reading
+      await this.setTaskListAction(this.state.taskList.filter(task => !awaitingRemoveNode.includes(task.id)))
+    }
   }
 
   async handleTaskStatusChange(obj, value) {
@@ -77,7 +101,7 @@ class TaskList extends React.Component {
     let targetIndex = taskList.findIndex(task => task.id === obj.id)
 
     taskList[targetIndex]['status'] = (value && TASK_STATUS.complete) || TASK_STATUS.inProgrss
-    await this.setState({ taskList })
+    await this.setTaskListAction(taskList)
     this.updateParentNode(taskList[targetIndex])
   }
 
@@ -102,7 +126,7 @@ class TaskList extends React.Component {
     } else {
       taskList.push(task)
     }
-    await this.setState({ taskList })
+    await this.setTaskListAction(taskList)
     this.updateParentNode(task)
   }
 
@@ -127,7 +151,7 @@ class TaskList extends React.Component {
         }
       }
 
-      await this.setState({ taskList })
+      await this.setTaskListAction(taskList)
 
       this.updateParentNode(taskList[parentNodeIndex]) // Repeat same action bubble up to the root level
     }
@@ -162,10 +186,12 @@ class TaskList extends React.Component {
     return result
   }
 
-  componentDidMount() {
-    if (this.state.taskList.length === 0) {
-      this.setState({ modalMeta: { isOpen: true, taskDetails: {} } })
-    }
+  resetTaskList() {
+    Promise.resolve(window.confirm('All your task will be permentaly remove.')).then(async res => {
+      if (res) {
+        await this.setTaskListAction([])
+      }
+    })
   }
 
   render() {
@@ -175,6 +201,7 @@ class TaskList extends React.Component {
           <Col xs="auto">
             <Form.Label>Filter</Form.Label>
           </Col>
+
           <Col xs="auto">
             <Form.Control as="select" onChange={this.handleFilterChange} value={this.state.currentFilter}>
               <FilterOptions />
@@ -186,32 +213,39 @@ class TaskList extends React.Component {
         </Row>
 
         {
-          this.state.taskList.filter(task => !task.parentId).map(task => {
-            if (!this.state.currentFilter || this.state.currentFilter === task.status) {
-              return (
-                <Media key={task.id} className={[{ 'border-light rounded card-group-outline': task.children.length > 0 }, 'mb-2']}>
-                  <Media.Body>
-                    <TaskCard
-                      cardInfo={task}
-                      callback={this.handleTaskStatusChange}
-                      childrenInfoGetter={this.nodeDescendants}
-                      isChecked={task.status !== TASK_STATUS.inProgrss}
-                      show={!this.state.currentFilter || this.state.currentFilter === task.status}
-                      openEditModal={() => this.setState({ modalMeta: { isOpen: true, taskDetails: task } })}
-                    />
+          this.state.taskList.length === 0
+            ? <Row className="justify-content-center mt-5">
+              <Col md="8" xl="6">
+                <TaskListEmptyStateCard setTaskList={this.setTaskListAction} />
+              </Col>
+            </Row>
+            : this.state.taskList.filter(task => !task.parentId).map(task => {
+              if (!this.state.currentFilter || this.state.currentFilter === task.status) {
+                return (
+                  <Media key={task.id} className={[{ 'border-light rounded card-group-outline': task.children.length > 0 }, 'mb-2']}>
+                    <Media.Body>
+                      <TaskCard
+                        cardInfo={task}
+                        callback={this.handleTaskStatusChange}
+                        childrenInfoGetter={this.nodeDescendants}
+                        removeTaskAction={this.handleChildNodeDetach}
+                        isChecked={task.status !== TASK_STATUS.inProgrss}
+                        openEditModal={() => this.setState({ modalMeta: { isOpen: true, taskDetails: task } })}
+                      />
 
-                    <TaskListChildComponent
-                      taskList={task.children}
-                      callback={this.handleTaskStatusChange}
-                      childrenInfoGetter={this.nodeDescendants}
-                      openEditModal={modalMeta => this.setState({ modalMeta })}
-                    />
-                  </Media.Body>
-                </Media>
-              )
-            }
-            return null
-          })
+                      <TaskListChildComponent
+                        taskList={task.children}
+                        callback={this.handleTaskStatusChange}
+                        childrenInfoGetter={this.nodeDescendants}
+                        removeTaskAction={this.handleChildNodeDetach}
+                        openEditModal={modalMeta => this.setState({ modalMeta })}
+                      />
+                    </Media.Body>
+                  </Media>
+                )
+              }
+              return null
+            })
         }
 
         {this.state.modalMeta.isOpen && <TaskAmendmentModal
@@ -221,6 +255,17 @@ class TaskList extends React.Component {
           parentIdValidation={this.parentTaskReferencingValidator}
           closeModal={() => this.setState({ modalMeta: { isOpen: false, taskDetails: {} } })}
         />}
+
+        <div>
+          <Button
+            size="sm"
+            variant="outline-secondary"
+            onClick={() => this.resetTaskList()}
+            className={['mt-5', { 'd-none': this.state.taskList.length === 0 }]}
+          >
+            Reset all my task
+          </Button>
+        </div>
       </div>
     )
   }

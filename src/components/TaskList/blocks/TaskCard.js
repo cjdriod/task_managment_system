@@ -7,41 +7,58 @@ function DepandancySummary({ nodeInfo }) {
     <div className="text-right">
       <u>Total</u>
 
-      <table>
-        <tbody>
-          <tr>
-            <td>Dependencies:</td>
-            <td className="pl-2">{nodeInfo.total}</td>
-          </tr>
+      <small>
+        <table>
+          <tbody>
+            <tr>
+              <td>Dependencies:</td>
+              <td className="pl-2">{nodeInfo.total}</td>
+            </tr>
 
-          <tr>
-            <td>Done:</td>
-            <td className="pl-2">{nodeInfo.done}</td>
-          </tr>
+            <tr>
+              <td>Complete:</td>
+              <td className="pl-2">{nodeInfo.complete}</td>
+            </tr>
 
-          <tr>
-            <td>Complete:</td>
-            <td className="pl-2">{nodeInfo.complete}</td>
-          </tr>
-        </tbody>
-      </table>
+            <tr>
+              <td>Done:</td>
+              <td className="pl-2">{nodeInfo.done}</td>
+            </tr>
+          </tbody>
+        </table>
+      </small>
     </div>
   )
 }
 
-function TaskCard({ cardInfo, isChecked, callback, openEditModal, childrenInfoGetter }) {
+function TaskCard({ cardInfo, isChecked, callback, openEditModal, childrenInfoGetter, removeTaskAction }) {
   let { id, title, parentId, status, children } = cardInfo
   let isSubTask = children.length === 0
   let childInfo = {}
 
-  if (!isSubTask) {
-    let tempData = childrenInfoGetter(cardInfo).slice(1) //Exclude self
+  function deleteTaskAction() {
+    let totalRemovingNodeCount = (childInfo.total || 0) + 1
 
-    childInfo = tempData.reduce(((acc, cur) => {
+    Promise.resolve(
+      window.confirm(
+        `You are about to remove ${totalRemovingNodeCount} task with this action!` +
+        `${childInfo.total ? '\n[Warning]: Children node will be remove together' : ''} `
+      )
+    ).then(async res => {
+      if (res) {
+        await removeTaskAction(cardInfo, true)
+      }
+    })
+  }
+
+  if (!isSubTask) {
+    let descendantsInfo = childrenInfoGetter(cardInfo).slice(1) //Exclude self
+
+    childInfo = descendantsInfo.reduce(((acc, cur) => {
       return {
         total: acc.total += 1,
-        done: acc.done += cur.status === TASK_STATUS.done,
-        complete: acc.complete += cur.status === TASK_STATUS.complete
+        done: acc.done += Number(cur.status === TASK_STATUS.done),
+        complete: acc.complete += Number(cur.status === TASK_STATUS.complete)
       }
     }), { total: 0, done: 0, complete: 0 })
   }
@@ -52,7 +69,7 @@ function TaskCard({ cardInfo, isChecked, callback, openEditModal, childrenInfoGe
         <Row>
           <Col xs="2" lg="1">#{id}</Col>
           <Col>
-            <div className={`font-weight-bold mb-1 ${(status === TASK_STATUS.complete && 'text-line-through') || ''}`}>
+            <div className={`font - weight - bold mb - 1 ${ (status === TASK_STATUS.complete && 'text-line-through') || '' } `}>
               {title[0].toUpperCase() + title.slice(1)}
             </div>
             {parentId && <Badge variant="warning">Parent id: {parentId}</Badge>}
@@ -77,6 +94,7 @@ function TaskCard({ cardInfo, isChecked, callback, openEditModal, childrenInfoGe
         <div className="d-flex justify-content-between">
           <div>Status: <i>{status}</i></div>
           <div>
+            <Button variant="link" className="p-0 pr-3 text-danger" onClick={deleteTaskAction}>Delete</Button>
             <Button variant="link" className="p-0" onClick={openEditModal}>Edit</Button>
           </div>
         </div>
