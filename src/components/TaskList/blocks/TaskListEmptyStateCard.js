@@ -1,17 +1,23 @@
 import emptyTaskIcon from '../../../assets/img/empty-note.png'
 import { Card, Image, Button } from 'react-bootstrap'
+import { LOAD_DEMO_TASK } from '../../../constant/localStorageKeys'
 
 function TaskListEmptyStateCard({ setTaskList }) {
 
+  if (sessionStorage.getItem(LOAD_DEMO_TASK)) {
+    sessionStorage.removeItem(LOAD_DEMO_TASK)
+    Promise.resolve(import('../../../mock.json')).then(res => {
+      setTaskList(res.default)
+    })
+  }
+
   function setMockData() {
     /* TODO:
-     idk why need to force raload then only can avoid invalid import data issue
-     issue only happend when the user load the mock data twice */
-    Promise.resolve(window.location.reload()).then(() => {
-      Promise.resolve(import('../../../mock.json')).then(res => {
-        setTaskList(res.default)
-      })
-    })
+     idk why need to force raload then only can avoid invalid import data issue.
+     This only happend when the user load the mock data twice
+    */
+    sessionStorage.setItem(LOAD_DEMO_TASK, true)
+    window.location.reload()
   }
 
   return (

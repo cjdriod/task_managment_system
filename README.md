@@ -8,7 +8,9 @@ A __Simple, Clean, Multi Hierarchy Support__ Task Managment System which built w
 - Permenent storage
 - \*A spaghetti cooking guide (ester egg)
 
-### How to use this application
+Click here for [LIVE DEMO](https://jack-task-management-system.vercel.app/) 
+
+### How to use this application in your local development
 1) cd into source file directory `$ ~/task-management-system`
 2) run `npm install`
 3) run `npm start` to lunch the application
