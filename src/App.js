@@ -21,8 +21,8 @@ function App() {
 
         <footer className="mt-auto bg-light p-2 text-center">
           <div className="mb-1">
-            {socialLink.map(link => (
-              <a href={link.value} rel="noreferrer" target="_blank" className="px-2">
+            {socialLink.map((link, index) => (
+              <a key={index} href={link.value} rel="noreferrer" target="_blank" className="px-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                   {link.icon}
                 </svg>
