@@ -28,7 +28,7 @@ function TaskListChildComponent({ taskList, callback, openEditModal, childrenInf
             callback={callback}
             removeTaskAction={removeTaskAction}
             childrenInfoGetter={childrenInfoGetter}
-            isChecked={task.status !== TASK_STATUS.inProgrss}
+            isChecked={task.status !== TASK_STATUS.inProgress}
             openEditModal={() => openEditModal({ isOpen: true, taskDetails: task })}
           />
 
@@ -100,14 +100,14 @@ class TaskList extends React.Component {
     let taskList = [...this.state.taskList]
     let targetIndex = taskList.findIndex(task => task.id === obj.id)
 
-    taskList[targetIndex]['status'] = (value && TASK_STATUS.complete) || TASK_STATUS.inProgrss
+    taskList[targetIndex]['status'] = (value && TASK_STATUS.complete) || TASK_STATUS.inProgress
     await this.setTaskListAction(taskList)
     this.updateParentNode(taskList[targetIndex])
   }
 
   async handleTaskListAmendment(payload) {
     let taskList = [...this.state.taskList]
-    let task = { id: (({ ...(taskList.slice(-1)[0]) }).id || 0) + 1, status: TASK_STATUS.inProgrss, children: [] }
+    let task = { id: (({ ...(taskList.slice(-1)[0]) }).id || 0) + 1, status: TASK_STATUS.inProgress, children: [] }
 
     if (payload.id) {
       task = { ...payload } // Override with exiting task details (update)
@@ -229,7 +229,7 @@ class TaskList extends React.Component {
                         callback={this.handleTaskStatusChange}
                         childrenInfoGetter={this.nodeDescendants}
                         removeTaskAction={this.handleChildNodeDetach}
-                        isChecked={task.status !== TASK_STATUS.inProgrss}
+                        isChecked={task.status !== TASK_STATUS.inProgress}
                         openEditModal={() => this.setState({ modalMeta: { isOpen: true, taskDetails: task } })}
                       />
 

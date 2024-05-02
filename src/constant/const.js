@@ -1,5 +1,5 @@
 export const TASK_STATUS = {
-  inProgrss: 'In Progress',
+  inProgress: 'In Progress',
   done: 'Done',
   complete: 'Complete',
 }

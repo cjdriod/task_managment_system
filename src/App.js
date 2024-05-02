@@ -1,5 +1,5 @@
 import { Container, Navbar } from 'react-bootstrap';
-import TaskList from './components/TaskList';
+import TaskListV2 from "./components/TaskListV2";
 
 function App() {
   let socialLink = [
@@ -16,7 +16,7 @@ function App() {
         </Navbar>
 
         <div className="mb-3">
-          <TaskList />
+          <TaskListV2 />
         </div>
 
         <footer className="mt-auto bg-light p-2 text-center">
